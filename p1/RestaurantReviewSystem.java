@@ -3,271 +3,236 @@ package p1;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
+import java.util.List;
 
 public class RestaurantReviewSystem {
     private JFrame frame;
-    private JPanel mainPanel;
-    private JComboBox<String> sortDropdown;
-    private JPanel cardsPanel;
-    private Reviewer currentUser = new Reviewer("you"); // 🔐 Current user
-
-    private String[] restaurantNames = {
-        "McDonald's 🍔", "Pizza Hut 🍕", "Starbucks ☕", "Taco Bell 🌮", "Subway 🥪"
-    };
-
-    private HashMap<String, String[]> topItems = new HashMap<>();
-    private HashMap<String, String[]> itemPrices = new HashMap<>();
-    private HashMap<String, ArrayList<Review>> restaurantReviews = new HashMap<>();
+    private Reviewer currentUser;
+    private HashMap<String, List<Review>> reviewsMap = new HashMap<>();
+    private HashMap<String, String> logoPaths = new HashMap<>();
+    private HashMap<String, List<String>> topMenuItems = new HashMap<>();
+    private HashMap<String, List<Double>> topItemPrices = new HashMap<>();
+    private String[] restaurants = {"McDonald's 🍔", "Pizza Hut 🍕", "Starbucks ☕", "Taco Bell 🌮", "Subway 🥪"};
 
     public RestaurantReviewSystem() {
-        frame = new JFrame("🔥 Restaurant Review System");
-        frame.setSize(700, 800);
+        initializeData();
+        loginScreen();
+    }
+
+    private void initializeData() {
+        for (String res : restaurants) {
+            reviewsMap.put(res, new ArrayList<>());
+        }
+
+        logoPaths.put("McDonald's 🍔", "images/mcdonalds.png");
+        logoPaths.put("Pizza Hut 🍕", "images/pizzahut.png");
+        logoPaths.put("Starbucks ☕", "images/starbucks.png");
+        logoPaths.put("Taco Bell 🌮", "images/tacobell.png");
+        logoPaths.put("Subway 🥪", "images/subway.png");
+
+        topMenuItems.put("McDonald's 🍔", Arrays.asList("🍟 Fries", "🍔 Big Mac", "🥤 Soda", "🍦 Sundae", "🍗 Nuggets"));
+        topMenuItems.put("Pizza Hut 🍕", Arrays.asList("🍕 Pepperoni Pizza", "🧀 Cheese Sticks", "🥗 Veggie Pizza", "🥤 Pepsi", "🍪 Cookie"));
+        topMenuItems.put("Starbucks ☕", Arrays.asList("☕ Latte", "🍰 Cake Pop", "🥐 Croissant", "🍫 Mocha", "🥤 Frappuccino"));
+        topMenuItems.put("Taco Bell 🌮", Arrays.asList("🌮 Taco", "🌯 Burrito", "🥤 Baja Blast", "🧀 Nachos", "🍩 Churro"));
+        topMenuItems.put("Subway 🥪", Arrays.asList("🥪 Turkey Sub", "🥓 BLT", "🍪 Cookie", "🥗 Salad", "🥤 Drink"));
+
+        topItemPrices.put("McDonald's 🍔", Arrays.asList(2.99, 4.49, 1.99, 2.29, 3.99));
+        topItemPrices.put("Pizza Hut 🍕", Arrays.asList(8.99, 4.99, 9.49, 1.79, 5.49));
+        topItemPrices.put("Starbucks ☕", Arrays.asList(4.79, 2.49, 3.59, 4.99, 5.79));
+        topItemPrices.put("Taco Bell 🌮", Arrays.asList(2.49, 3.99, 1.89, 2.99, 1.99));
+        topItemPrices.put("Subway 🥪", Arrays.asList(5.49, 6.49, 1.99, 4.79, 1.59));
+    }
+
+    private void loginScreen() {
+        JFrame loginFrame = new JFrame("Login 🍽️");
+        loginFrame.setSize(300, 200);
+        loginFrame.setLocationRelativeTo(null);
+        loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        loginFrame.getContentPane().setBackground(Color.BLACK);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(4, 1, 5, 5));
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        panel.setBackground(Color.BLACK);
+
+        JTextField username = new JTextField();
+        JPasswordField password = new JPasswordField();
+
+        JButton loginBtn = new JButton("Login 🔐");
+        loginBtn.addActionListener(e -> {
+            String user = username.getText().trim();
+            String pass = new String(password.getPassword()).trim();
+            if (user.isEmpty() || pass.isEmpty()) {
+                JOptionPane.showMessageDialog(loginFrame, "Please enter both username and password!");
+                return;
+            }
+            currentUser = new Reviewer(user, pass);
+            loginFrame.dispose();
+            showMainUI();
+        });
+
+        panel.add(new JLabel("👤 Username:", SwingConstants.CENTER));
+        panel.add(username);
+        panel.add(new JLabel("🔑 Password:", SwingConstants.CENTER));
+        panel.add(password);
+        loginFrame.add(panel, BorderLayout.CENTER);
+        loginFrame.add(loginBtn, BorderLayout.SOUTH);
+        loginFrame.setVisible(true);
+    }
+
+    private void showMainUI() {
+        frame = new JFrame("Restaurant Review System ✨");
+        frame.setSize(600, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
         frame.getContentPane().setBackground(Color.BLACK);
         frame.setLayout(new BorderLayout());
 
-        setupTopItems();
-        generateFakeReviews();
-        setupMainPanel();
-        refreshCards();
+        JPanel restaurantPanel = new JPanel();
+        restaurantPanel.setLayout(new BoxLayout(restaurantPanel, BoxLayout.Y_AXIS));
+        restaurantPanel.setBackground(Color.BLACK);
 
+        for (String restaurant : restaurants) {
+            JPanel card = createRestaurantCard(restaurant);
+            restaurantPanel.add(card);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(restaurantPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        frame.add(scrollPane, BorderLayout.CENTER);
         frame.setVisible(true);
     }
 
-    private void setupTopItems() {
-        topItems.put("McDonald's 🍔", new String[]{"🍟 Fries", "🍔 Big Mac", "🍗 Nuggets", "🍦 McFlurry", "🥤 Coke"});
-        topItems.put("Pizza Hut 🍕", new String[]{"🍕 Pepperoni Pizza", "🧀 Cheese Sticks", "🥗 Veggie Pizza", "🥤 Pepsi", "🍪 Cookie"});
-        topItems.put("Starbucks ☕", new String[]{"☕ Latte", "🍪 Cookie", "🥐 Croissant", "🍰 Cake Pop", "🧋 Cold Brew"});
-        topItems.put("Taco Bell 🌮", new String[]{"🌮 Taco", "🌯 Burrito", "🍟 Nacho Fries", "🧀 Quesadilla", "🥤 Baja Blast"});
-        topItems.put("Subway 🥪", new String[]{"🥪 Italian BMT", "🥗 Veggie Delite", "🍪 Cookie", "🧀 Tuna Sub", "🥤 Lemonade"});
+    private JPanel createRestaurantCard(String restaurantName) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.DARK_GRAY);
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        card.setMaximumSize(new Dimension(550, 150));
 
-        itemPrices.put("McDonald's 🍔", new String[]{"$2.49", "$5.99", "$4.29", "$3.49", "$1.99"});
-        itemPrices.put("Pizza Hut 🍕", new String[]{"$8.99", "$4.99", "$9.49", "$1.79", "$5.49"});
-        itemPrices.put("Starbucks ☕", new String[]{"$4.25", "$2.25", "$3.95", "$2.95", "$3.75"});
-        itemPrices.put("Taco Bell 🌮", new String[]{"$1.79", "$4.99", "$2.49", "$3.79", "$1.99"});
-        itemPrices.put("Subway 🥪", new String[]{"$6.49", "$5.49", "$1.29", "$6.99", "$1.99"});
+        JLabel logo = new JLabel();
+        ImageIcon icon = new ImageIcon(logoPaths.get(restaurantName));
+        Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+        logo.setIcon(new ImageIcon(scaled));
+        card.add(logo, BorderLayout.WEST);
+
+        JPanel info = new JPanel();
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+        info.setBackground(Color.DARK_GRAY);
+
+        JLabel nameLabel = new JLabel(restaurantName);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        nameLabel.setForeground(Color.WHITE);
+        info.add(nameLabel);
+
+        double avgRating = reviewsMap.get(restaurantName).stream()
+                .mapToInt(Review::getRating)
+                .average().orElse(4.0);
+        info.add(createStarPanel(avgRating));
+
+        JButton editButton = new JButton("✏️ Edit");
+        editButton.addActionListener(e -> openEditPopup(restaurantName));
+
+        card.add(info, BorderLayout.CENTER);
+        card.add(editButton, BorderLayout.EAST);
+        return card;
     }
 
-    private void generateFakeReviews() {
-        String[] users = {"cheeeseloverr", "foodieQueen", "tacogawd", "icedLatte", "spicyBoi"};
-        String[][] comments = {
-            {"Fries are 🔥", "Big Mac is a classic", "Love those nuggets!", "McFlurry = 😋", "Coke always hits"},
-            {"So cheesy!", "Great crust!", "Fresh salad!", "Pepsi hits", "Warm cookie 🥺"},
-            {"Perfect latte!", "Best cookie!", "Buttery croissant!", "Cute cake pop", "Cold brew energizer"},
-            {"Crunchy tacos 😍", "Beef burrito slaps", "Love the fries", "Cheesy Q rocks!", "Blast is life"},
-            {"Footlong = filling", "Fresh veggies", "Soft cookie!", "Love their tuna", "Cold drink = win"}
+    private JPanel createStarPanel(double rating) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.setBackground(Color.DARK_GRAY);
+
+        int roundedRating = (int) Math.round(rating);
+        Color starColor = switch (roundedRating) {
+            case 5 -> Color.BLUE;
+            case 3 -> Color.RED;
+            case 1 -> Color.GREEN;
+            default -> Color.YELLOW;
         };
 
-        Random rand = new Random();
-        for (int i = 0; i < restaurantNames.length; i++) {
-            ArrayList<Review> list = new ArrayList<>();
-            for (int j = 0; j < 5; j++) {
-                int rating = rand.nextInt(5) + 1;
-                list.add(new Review(restaurantNames[i], rating, comments[i][j], users[j], false));
-            }
-            restaurantReviews.put(restaurantNames[i], list);
+        for (int i = 1; i <= 5; i++) {
+            JLabel star = new JLabel(i <= roundedRating ? "★" : "☆");
+            star.setForeground(i <= roundedRating ? starColor : Color.GRAY);
+            panel.add(star);
         }
+
+        return panel;
     }
 
-    private void setupMainPanel() {
-        mainPanel = new JPanel(new BorderLayout());
+    private void openEditPopup(String restaurantName) {
+        JFrame popup = new JFrame("Edit Review 📝");
+        popup.setSize(450, 600);
+        popup.setLocationRelativeTo(frame);
+        popup.getContentPane().setBackground(Color.BLACK);
+        popup.setLayout(new BorderLayout());
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBackground(Color.BLACK);
 
-        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        sortPanel.setBackground(Color.BLACK);
-        sortPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        mainPanel.add(new JLabel("🔥 Rate Top Items:"));
+        List<String> items = topMenuItems.get(restaurantName);
+        List<Double> prices = topItemPrices.get(restaurantName);
+        HashMap<String, Integer> itemRatings = new HashMap<>();
 
-        sortDropdown = new JComboBox<>(new String[]{"Sort by", "Name (A-Z)", "Rating (High–Low)"});
-        sortDropdown.addActionListener(e -> refreshCards());
-        sortPanel.add(new JLabel("Sort:")).setForeground(Color.WHITE);
-        sortPanel.add(sortDropdown);
-
-        cardsPanel = new JPanel();
-        cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
-        cardsPanel.setBackground(Color.BLACK);
-
-        JScrollPane scrollPane = new JScrollPane(cardsPanel);
-        scrollPane.setBorder(null);
-
-        mainPanel.add(sortPanel, BorderLayout.NORTH);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-
-        frame.add(mainPanel, BorderLayout.CENTER);
-    }
-
-    private void refreshCards() {
-        cardsPanel.removeAll();
-        ArrayList<String> sorted = new ArrayList<>(Arrays.asList(restaurantNames));
-
-        if ("Name (A-Z)".equals(sortDropdown.getSelectedItem())) {
-            sorted.sort(Comparator.naturalOrder());
-        } else if ("Rating (High–Low)".equals(sortDropdown.getSelectedItem())) {
-            sorted.sort((a, b) -> Double.compare(getAverageRating(b), getAverageRating(a)));
-        }
-
-        for (String restaurant : sorted) {
-            JPanel card = new JPanel(new BorderLayout());
-            card.setMaximumSize(new Dimension(650, 150));
-            card.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
-            card.setBackground(Color.BLACK);
-
-            JPanel info = new JPanel();
-            info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-            info.setBackground(Color.BLACK);
-
-            JLabel nameLabel = new JLabel(restaurant);
-            nameLabel.setFont(new Font("Arial", Font.BOLD, 20));
-            nameLabel.setForeground(Color.WHITE);
-
-            double avg = getAverageRating(restaurant);
-            JLabel ratingLabel = getColoredStars((int) Math.round(avg));
-            JLabel summary = new JLabel("🔥 Top rated by foodies!");
-            summary.setForeground(Color.LIGHT_GRAY);
-
-            info.add(nameLabel);
-            info.add(ratingLabel);
-            info.add(summary);
-
-            JButton editBtn = new JButton("✏️ Edit");
-            editBtn.addActionListener(e -> openEditPopup(restaurant));
-
-            JPanel right = new JPanel(new BorderLayout());
-            right.setBackground(Color.BLACK);
-            right.add(editBtn, BorderLayout.NORTH);
-
-            card.add(info, BorderLayout.CENTER);
-            card.add(right, BorderLayout.EAST);
-
-            cardsPanel.add(card);
-            cardsPanel.add(Box.createVerticalStrut(10));
-        }
-
-        cardsPanel.revalidate();
-        cardsPanel.repaint();
-    }
-
-    private double getAverageRating(String restaurant) {
-        return restaurantReviews.get(restaurant).stream().mapToInt(Review::getRating).average().orElse(0.0);
-    }
-
-    private JLabel getColoredStars(int rating) {
-        JLabel label = new JLabel("★".repeat(rating) + "☆".repeat(5 - rating));
-        label.setFont(new Font("Arial", Font.BOLD, 16));
-        switch (rating) {
-            case 1 -> label.setForeground(Color.GREEN);
-            case 2 -> label.setForeground(Color.ORANGE);
-            case 3 -> label.setForeground(Color.RED);
-            case 4 -> label.setForeground(Color.YELLOW);
-            case 5 -> label.setForeground(Color.CYAN);
-            default -> label.setForeground(Color.GRAY);
-        }
-        return label;
-    }
-
-    private void openEditPopup(String restaurant) {
-        JDialog popup = new JDialog(frame, "Edit Review – " + restaurant, true);
-        popup.setSize(550, 650);
-        popup.setLocationRelativeTo(frame);
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(Color.BLACK);
-        panel.setBorder(new EmptyBorder(15, 20, 15, 20));
-
-        for (Review r : restaurantReviews.get(restaurant)) {
-            JPanel revPanel = new JPanel(new BorderLayout());
-            revPanel.setBackground(Color.BLACK);
-            JLabel user = new JLabel("@" + r.getUsername());
-            user.setForeground(getUsernameColor(r.getUsername()));
-            JLabel stars = getColoredStars(r.getRating());
-            JLabel text = new JLabel(r.getComment());
-            text.setForeground(Color.LIGHT_GRAY);
-            JPanel box = new JPanel();
-            box.setBackground(Color.BLACK);
-            box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
-            box.add(user);
-            box.add(stars);
-            box.add(text);
-            revPanel.add(box, BorderLayout.WEST);
-            panel.add(revPanel);
-            panel.add(Box.createVerticalStrut(10));
-        }
-
-        JTextArea comment = new JTextArea(3, 20);
-        comment.setWrapStyleWord(true);
-        comment.setLineWrap(true);
-
-        JComboBox<Integer> starRating = new JComboBox<>(new Integer[]{1, 2, 3, 4, 5});
-        JLabel mood = new JLabel("😐");
-        mood.setForeground(Color.LIGHT_GRAY);
-        starRating.addActionListener(e -> mood.setText(getMood((int) starRating.getSelectedItem())));
-
-        JLabel menuTitle = new JLabel("🔥 Top 5 Menu Items:");
-        menuTitle.setForeground(Color.WHITE);
-        panel.add(menuTitle);
-
-        String[] items = topItems.get(restaurant);
-        String[] prices = itemPrices.get(restaurant);
-
-        for (int i = 0; i < items.length; i++) {
+        for (int i = 0; i < items.size(); i++) {
+            String item = items.get(i);
+            double price = prices.get(i);
             JPanel itemRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
             itemRow.setBackground(Color.BLACK);
-            JLabel item = new JLabel(items[i] + " – " + prices[i]);
-            item.setForeground(Color.WHITE);
-            JSlider slider = new JSlider(1, 5, 3);
-            slider.setMajorTickSpacing(1);
-            slider.setPaintTicks(true);
-            slider.setPaintLabels(true);
-            itemRow.add(item);
-            itemRow.add(slider);
-            panel.add(itemRow);
+
+            JLabel itemLabel = new JLabel(item + " – $" + price);
+            itemLabel.setForeground(Color.WHITE);
+            itemRow.add(itemLabel);
+
+            JComboBox<Integer> ratingBox = new JComboBox<>(new Integer[]{1, 2, 3, 4, 5});
+            itemRow.add(ratingBox);
+
+            ratingBox.addActionListener(e -> itemRatings.put(item, (Integer) ratingBox.getSelectedItem()));
+            mainPanel.add(itemRow);
         }
 
-        JButton save = new JButton("💾 Save");
-        save.setBackground(new Color(0, 153, 76));
-        save.setForeground(Color.WHITE);
-        save.addActionListener(e -> {
-            restaurantReviews.get(restaurant).removeIf(r -> r.getUsername().equals(currentUser.getUsername()));
-            restaurantReviews.get(restaurant).add(new Review(restaurant, (int) starRating.getSelectedItem(), comment.getText(), currentUser.getUsername(), true));
-            popup.dispose();
-            refreshCards();
+        mainPanel.add(Box.createVerticalStrut(10));
+        JTextField commentField = new JTextField("Your review...");
+        mainPanel.add(commentField);
+
+        JComboBox<Integer> starRatingBox = new JComboBox<>(new Integer[]{1, 2, 3, 4, 5});
+        JLabel moodLabel = new JLabel("🙂");
+        moodLabel.setForeground(Color.ORANGE);
+        starRatingBox.addActionListener(e -> {
+            int r = (int) starRatingBox.getSelectedItem();
+            moodLabel.setText(switch (r) {
+                case 5 -> "🤩";
+                case 4 -> "😊";
+                case 3 -> "😐";
+                case 2 -> "🫤";
+                default -> "😬";
+            });
         });
 
-        panel.add(new JLabel("✍️ Your Review:")).setForeground(Color.WHITE);
-        panel.add(comment);
-        panel.add(starRating);
-        panel.add(mood);
-        panel.add(save);
+        JPanel moodRow = new JPanel();
+        moodRow.setBackground(Color.BLACK);
+        moodRow.add(new JLabel("Your Rating:"));
+        moodRow.add(starRatingBox);
+        moodRow.add(moodLabel);
+        mainPanel.add(moodRow);
 
-        popup.add(new JScrollPane(panel));
+        JButton save = new JButton("💾 Save");
+        save.addActionListener(e -> {
+            int rating = (int) starRatingBox.getSelectedItem();
+            String comment = commentField.getText();
+            reviewsMap.get(restaurantName).add(new Review(currentUser.getUsername(), restaurantName, rating, comment));
+            JOptionPane.showMessageDialog(popup, "Thanks for your rating, " + currentUser.getUsername() + "! 🙏");
+            popup.dispose();
+            frame.dispose();
+            showMainUI();
+        });
+
+        popup.add(mainPanel, BorderLayout.CENTER);
+        popup.add(save, BorderLayout.SOUTH);
         popup.setVisible(true);
     }
 
-    private Color getUsernameColor(String user) {
-        return switch (user) {
-            case "cheeeseloverr" -> Color.CYAN;
-            case "foodieQueen" -> Color.PINK;
-            case "tacogawd" -> new Color(255, 102, 0);
-            case "icedLatte" -> new Color(153, 102, 255);
-            case "spicyBoi" -> Color.RED;
-            default -> Color.LIGHT_GRAY;
-        };
-    }
-
-    private String getMood(int stars) {
-        return switch (stars) {
-            case 1 -> "💚 Terrible";
-            case 2 -> "🧡 Meh";
-            case 3 -> "❤️ Okay";
-            case 4 -> "💛 Great!";
-            case 5 -> "💙 Amazing!";
-            default -> "😐";
-        };
-    }
-
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(RestaurantReviewSystem::new);
+        new RestaurantReviewSystem();
     }
 }
