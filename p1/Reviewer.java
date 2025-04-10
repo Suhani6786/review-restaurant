@@ -9,6 +9,5 @@ public class Reviewer {
 
     public String getUsername() {
         return username;
-
     }
 }
