@@ -1,18 +1,19 @@
 package p1;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.awt.event.*;
+import java.io.File;
+import java.util.*;
 import javax.swing.*;
 
 public class RestaurantReviewSystem {
     private JFrame frame;
     private CardLayout cardLayout;
     private JPanel panelContainer;
-    private Reviewer currentUser;
-    private ArrayList<Reviewer> users = new ArrayList<>();
+    private Reviewer currentUser = new Reviewer("guest", "123"); // one user only
     private String[] restaurantNames = {"McDonald's", "Pizza Hut", "Starbucks", "Taco Bell", "Subway"};
     private HashMap<String, String> logoPaths = new HashMap<>();
+    private JPanel reviewsPanel;
 
     public RestaurantReviewSystem() {
         frame = new JFrame("Restaurant Review System");
@@ -21,7 +22,7 @@ public class RestaurantReviewSystem {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
 
-        // Load logo paths (make sure these files are in /images folder)
+        // Logo paths (must be in 'images/' folder)
         logoPaths.put("McDonald's", "images/mcdonalds.png");
         logoPaths.put("Pizza Hut", "images/pizzahut.png");
         logoPaths.put("Starbucks", "images/starbucks.png");
@@ -31,82 +32,54 @@ public class RestaurantReviewSystem {
         cardLayout = new CardLayout();
         panelContainer = new JPanel(cardLayout);
 
-        panelContainer.add(loginPanel(), "Login");
         panelContainer.add(mainPanel(), "Main");
 
         frame.add(panelContainer);
         frame.setVisible(true);
     }
 
-    private JPanel loginPanel() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.LIGHT_GRAY);
-        panel.setLayout(new GridLayout(5, 1, 10, 10));
-
-        JTextField usernameField = new JTextField();
-        JPasswordField passwordField = new JPasswordField();
-        JButton loginButton = new JButton("Continue");
-
-        loginButton.addActionListener(e -> {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword()).trim();
-
-            if (username.isEmpty() || password.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Fields cannot be empty!");
-                return;
-            }
-
-            boolean userExists = false;
-            for (Reviewer user : users) {
-                if (user.username.equals(username)) {
-                    userExists = true;
-                    if (user.login(username, password)) {
-                        currentUser = user;
-                        cardLayout.show(panelContainer, "Main");
-                        return;
-                    } else {
-                        JOptionPane.showMessageDialog(frame, "Incorrect password!");
-                        return;
-                    }
-                }
-            }
-
-            if (!userExists) {
-                Reviewer newUser = new Reviewer(username, password);
-                users.add(newUser);
-                currentUser = newUser;
-                JOptionPane.showMessageDialog(frame, "New user registered!");
-                cardLayout.show(panelContainer, "Main");
-            }
-        });
-
-        panel.add(new JLabel("Username:"));
-        panel.add(usernameField);
-        panel.add(new JLabel("Password:"));
-        panel.add(passwordField);
-        panel.add(loginButton);
-
-        return panel;
-    }
-
     private JPanel mainPanel() {
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Header Section
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.add(new JTextField("Search"), BorderLayout.NORTH);
+        // Header
+        JTextField searchField = new JTextField("Search");
+        mainPanel.add(searchField, BorderLayout.NORTH);
 
-        JComboBox<String> sortDropdown = new JComboBox<>(new String[]{"Sort by"});
+        String[] sortOptions = {
+            "Sort by", "Rating: High to Low", "Rating: Low to High", "Name: A to Z", "Name: Z to A"
+        };
+        JComboBox<String> sortDropdown = new JComboBox<>(sortOptions);
+
         JPanel sortPanel = new JPanel();
         sortPanel.add(new JLabel("Sort by:"));
         sortPanel.add(sortDropdown);
-        headerPanel.add(sortPanel, BorderLayout.SOUTH);
-        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(sortPanel, BorderLayout.BEFORE_FIRST_LINE);
 
-        // Review Cards Section
-        JPanel reviewsPanel = new JPanel();
+        // Review display panel
+        reviewsPanel = new JPanel();
         reviewsPanel.setLayout(new BoxLayout(reviewsPanel, BoxLayout.Y_AXIS));
+        refreshReviews();
+
+        JScrollPane scrollPane = new JScrollPane(reviewsPanel);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Add review button
+        JButton addReview = new JButton("+ Add Review");
+        mainPanel.add(addReview, BorderLayout.SOUTH);
+
+        // Listeners
+        addReview.addActionListener(e -> openReviewPopup());
+        sortDropdown.addActionListener(e -> {
+            String selected = (String) sortDropdown.getSelectedItem();
+            JOptionPane.showMessageDialog(frame, "Sort selected: " + selected);
+            // TODO: Add real sorting logic later
+        });
+
+        return mainPanel;
+    }
+
+    private void refreshReviews() {
+        reviewsPanel.removeAll();
 
         for (String name : restaurantNames) {
             JPanel card = new JPanel(new BorderLayout());
@@ -114,10 +87,10 @@ public class RestaurantReviewSystem {
             card.setBackground(Color.WHITE);
             card.setMaximumSize(new Dimension(350, 100));
 
-            // Load logo image
+            // Logo
             JLabel logoLabel;
             if (logoPaths.containsKey(name)) {
-                ImageIcon icon = new ImageIcon(logoPaths.get(name));
+                ImageIcon icon = new ImageIcon(new File(logoPaths.get(name)).getAbsolutePath());
                 Image scaled = icon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
                 logoLabel = new JLabel(new ImageIcon(scaled));
             } else {
@@ -126,17 +99,26 @@ public class RestaurantReviewSystem {
             logoLabel.setPreferredSize(new Dimension(80, 80));
             logoLabel.setHorizontalAlignment(JLabel.CENTER);
 
-            // Info panel
+            // Info
             JPanel info = new JPanel();
             info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
-            info.add(new JLabel(name));
-            info.add(new JLabel("★★★★☆"));
-            info.add(new JLabel("Sample review."));
 
-            // Button panel
+            JLabel nameLabel = new JLabel(name);
+            nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+            JLabel starsLabel = new JLabel("★★★★☆");
+            starsLabel.setForeground(Color.YELLOW);
+
+            JLabel commentLabel = new JLabel(getReviewComment(name));
+
+            info.add(nameLabel);
+            info.add(starsLabel);
+            info.add(commentLabel);
+
+            // Buttons
             JPanel buttons = new JPanel();
-            buttons.add(new JButton("Edit"));
-            buttons.add(new JButton("Delete"));
+            buttons.add(new JButton("Edit"));   // future
+            buttons.add(new JButton("Delete")); // future
 
             card.add(logoLabel, BorderLayout.WEST);
             card.add(info, BorderLayout.CENTER);
@@ -145,16 +127,47 @@ public class RestaurantReviewSystem {
             reviewsPanel.add(card);
         }
 
-        JScrollPane scrollPane = new JScrollPane(reviewsPanel);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        reviewsPanel.revalidate();
+        reviewsPanel.repaint();
+    }
 
-        JButton addReview = new JButton("+ Add Review");
-        mainPanel.add(addReview, BorderLayout.SOUTH);
+    private String getReviewComment(String restaurant) {
+        for (Review review : currentUser.getReviews()) {
+            if (review.getRestaurant().equalsIgnoreCase(restaurant)) {
+                return review.getComment();
+            }
+        }
+        return "Sample review.";
+    }
 
-        return mainPanel;
+    private void openReviewPopup() {
+        JPanel form = new JPanel(new GridLayout(3, 2, 10, 10));
+
+        JComboBox<String> restaurantSelect = new JComboBox<>(restaurantNames);
+        JComboBox<String> starSelect = new JComboBox<>(new String[]{"1", "2", "3", "4", "5"});
+        JTextField commentField = new JTextField();
+
+        form.add(new JLabel("Restaurant:"));
+        form.add(restaurantSelect);
+        form.add(new JLabel("Rating:"));
+        form.add(starSelect);
+        form.add(new JLabel("Comment:"));
+        form.add(commentField);
+
+        int result = JOptionPane.showConfirmDialog(frame, form, "Add Review", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            String restaurant = (String) restaurantSelect.getSelectedItem();
+            int stars = Integer.parseInt((String) starSelect.getSelectedItem());
+            String comment = commentField.getText().trim();
+
+            currentUser.writeReview(restaurant, stars, comment);
+            refreshReviews();
+        }
     }
 
     public static void main(String[] args) {
         new RestaurantReviewSystem();
     }
 }
+
+

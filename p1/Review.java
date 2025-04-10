@@ -11,7 +11,15 @@ public class Review {
         this.comment = comment;
     }
 
-    public String getReviewDetails() {
-        return restaurant + " | " + rating + " stars | " + comment;
+    public String getRestaurant() {
+        return restaurant;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public String getComment() {
+        return comment;
     }
 }
