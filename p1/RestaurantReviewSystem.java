@@ -80,7 +80,8 @@ public class RestaurantReviewSystem {
         topBar.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         JTextField searchBar = new JTextField(" Search...");
-        JComboBox<String> sortBox = new JComboBox<>(new String[]{"Sort by", "Name A-Z", "Rating High–Low, "Rating Low–High"});
+        JComboBox<String> sortBox = new JComboBox<>(new String[]{"Sort by", "Name A-Z", "Rating High-Low", "Rating Low-High"});
+
         topBar.add(searchBar, BorderLayout.WEST);
         topBar.add(sortBox, BorderLayout.EAST);
 
