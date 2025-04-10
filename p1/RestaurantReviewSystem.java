@@ -1,12 +1,10 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
+package p1;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class RestaurantReviewSystem {
     private JFrame frame;
@@ -162,7 +160,7 @@ public class RestaurantReviewSystem {
     }
 
     private void showEditPopup(String restaurant) {
-        JDialog popup = new JDialog(frame, "Edit Review - " + restaurant, true);
+        JDialog popup = new JDialog(frame, "Edit Review – " + restaurant, true);
         popup.setSize(500, 600);
         popup.setLocationRelativeTo(frame);
 
@@ -178,21 +176,25 @@ public class RestaurantReviewSystem {
         JComboBox<Integer> ratingBox = new JComboBox<>(new Integer[]{1,2,3,4,5});
         panel.add(ratingBox);
 
+        panel.add(Box.createVerticalStrut(10));
+        JLabel commentLabel = new JLabel("Comment:");
+        commentLabel.setForeground(Color.WHITE);
+        panel.add(commentLabel);
+
         JTextArea commentArea = new JTextArea(3, 20);
         commentArea.setLineWrap(true);
         commentArea.setWrapStyleWord(true);
-        panel.add(new JLabel("Comment:")).setForeground(Color.WHITE);
         panel.add(commentArea);
 
         panel.add(Box.createVerticalStrut(10));
         panel.add(new JLabel("🔥 Rate Top Items:")).setForeground(Color.WHITE);
 
-        java.util.List<String> items = topItems.get(restaurant);
-        java.util.List<String> prices = topPrices.get(restaurant);
+        List<String> items = topItems.get(restaurant);
+        List<String> prices = topPrices.get(restaurant);
         for (int i = 0; i < items.size(); i++) {
             JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
             row.setBackground(Color.BLACK);
-            JLabel itemLabel = new JLabel(items.get(i) + " " + prices.get(i));
+            JLabel itemLabel = new JLabel(items.get(i) + " – " + prices.get(i));
             itemLabel.setForeground(Color.WHITE);
             JSlider slider = new JSlider(1, 5, 3);
             slider.setMajorTickSpacing(1);
@@ -206,7 +208,6 @@ public class RestaurantReviewSystem {
         JButton saveBtn = new JButton("Save");
         saveBtn.setBackground(new Color(0, 153, 76));
         saveBtn.setForeground(Color.WHITE);
-
         saveBtn.addActionListener(e -> {
             reviewsMap.get(restaurant).removeIf(r -> r.getUsername().equals(currentUser.getUsername()));
             String comment = commentArea.getText().trim();
@@ -226,7 +227,9 @@ public class RestaurantReviewSystem {
         panel.add(saveBtn);
 
         panel.add(Box.createVerticalStrut(20));
-        panel.add(new JLabel("💬 Others' Reviews:")).setForeground(Color.WHITE);
+        JLabel others = new JLabel("💬 Others' Reviews:");
+        others.setForeground(Color.WHITE);
+        panel.add(others);
 
         for (Review r : reviewsMap.get(restaurant)) {
             if (!r.getUsername().equals(currentUser.getUsername())) {
