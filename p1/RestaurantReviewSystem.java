@@ -20,7 +20,7 @@ public class RestaurantReviewSystem {
     private HashMap<String, String[]> topItems = new HashMap<>();
     private HashMap<String, String[]> itemPrices = new HashMap<>();
     private HashMap<String, ArrayList<Review>> restaurantReviews = new HashMap<>();
-    private HashMap<String, String> logoPaths = new HashMap<>(); // ✅ logo paths
+    private HashMap<String, String> logoPaths = new HashMap<>();
 
     public RestaurantReviewSystem() {
         frame = new JFrame("🔥 Restaurant Review System");
@@ -31,7 +31,7 @@ public class RestaurantReviewSystem {
         frame.setLayout(new BorderLayout());
 
         setupTopItems();
-        setupLogos(); // ✅ logo setup
+        setupLogos(); // ✅ based on your structure
         generateFakeReviews();
         setupMainPanel();
         refreshCards();
@@ -54,11 +54,11 @@ public class RestaurantReviewSystem {
     }
 
     private void setupLogos() {
-        logoPaths.put("McDonald's 🍔", "/images/mcdonalds.png");
-        logoPaths.put("Pizza Hut 🍕", "/images/pizzahut.png");
-        logoPaths.put("Starbucks ☕", "/images/starbucks.png");
-        logoPaths.put("Taco Bell 🌮", "/images/tacobell.png");
-        logoPaths.put("Subway 🥪", "/images/subway.png");
+        logoPaths.put("McDonald's 🍔", "images/mcdonalds.png");
+        logoPaths.put("Pizza Hut 🍕", "images/pizzahut.png");
+        logoPaths.put("Starbucks ☕", "images/starbucks.png");
+        logoPaths.put("Taco Bell 🌮", "images/tacobell.png");
+        logoPaths.put("Subway 🥪", "images/subway.png");
     }
 
     private void generateFakeReviews() {
@@ -92,7 +92,9 @@ public class RestaurantReviewSystem {
 
         sortDropdown = new JComboBox<>(new String[]{"Sort by", "Name (A-Z)", "Rating (High–Low)"});
         sortDropdown.addActionListener(e -> refreshCards());
-        sortPanel.add(new JLabel("Sort:")).setForeground(Color.WHITE);
+        JLabel sortLabel = new JLabel("Sort:");
+        sortLabel.setForeground(Color.WHITE);
+        sortPanel.add(sortLabel);
         sortPanel.add(sortDropdown);
 
         cardsPanel = new JPanel();
@@ -104,14 +106,12 @@ public class RestaurantReviewSystem {
 
         mainPanel.add(sortPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-
         frame.add(mainPanel, BorderLayout.CENTER);
     }
 
     private void refreshCards() {
         cardsPanel.removeAll();
         ArrayList<String> sorted = new ArrayList<>(Arrays.asList(restaurantNames));
-
         if ("Name (A-Z)".equals(sortDropdown.getSelectedItem())) {
             sorted.sort(Comparator.naturalOrder());
         } else if ("Rating (High–Low)".equals(sortDropdown.getSelectedItem())) {
@@ -124,14 +124,17 @@ public class RestaurantReviewSystem {
             card.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
             card.setBackground(Color.BLACK);
 
-            // ✅ Add logo on the left
             String path = logoPaths.get(restaurant);
             if (path != null) {
-                ImageIcon icon = new ImageIcon(getClass().getResource(path));
-                Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
-                JLabel logo = new JLabel(new ImageIcon(scaled));
-                logo.setBorder(new EmptyBorder(10, 10, 10, 10));
-                card.add(logo, BorderLayout.WEST);
+                try {
+                    ImageIcon icon = new ImageIcon(path);
+                    Image scaled = icon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
+                    JLabel logo = new JLabel(new ImageIcon(scaled));
+                    logo.setBorder(new EmptyBorder(10, 10, 10, 10));
+                    card.add(logo, BorderLayout.WEST);
+                } catch (Exception e) {
+                    System.out.println("⚠️ Logo not found at: " + path);
+                }
             }
 
             JPanel info = new JPanel();
@@ -153,14 +156,12 @@ public class RestaurantReviewSystem {
 
             JButton editBtn = new JButton("✏️ Edit");
             editBtn.addActionListener(e -> openEditPopup(restaurant));
-
             JPanel right = new JPanel(new BorderLayout());
             right.setBackground(Color.BLACK);
             right.add(editBtn, BorderLayout.NORTH);
 
             card.add(info, BorderLayout.CENTER);
             card.add(right, BorderLayout.EAST);
-
             cardsPanel.add(card);
             cardsPanel.add(Box.createVerticalStrut(10));
         }
@@ -170,7 +171,10 @@ public class RestaurantReviewSystem {
     }
 
     private double getAverageRating(String restaurant) {
-        return restaurantReviews.get(restaurant).stream().mapToInt(Review::getRating).average().orElse(0.0);
+        return restaurantReviews.get(restaurant).stream()
+            .mapToInt(Review::getRating)
+            .average()
+            .orElse(0.0);
     }
 
     private JLabel getColoredStars(int rating) {
@@ -187,10 +191,33 @@ public class RestaurantReviewSystem {
         return label;
     }
 
+    private String getMood(int stars) {
+        return switch (stars) {
+            case 1 -> "💚 Terrible";
+            case 2 -> "🧡 Meh";
+            case 3 -> "❤️ Okay";
+            case 4 -> "💛 Great!";
+            case 5 -> "💙 Amazing!";
+            default -> "😐";
+        };
+    }
+
+    private Color getUsernameColor(String user) {
+        return switch (user) {
+            case "cheeeseloverr" -> Color.CYAN;
+            case "foodieQueen" -> Color.PINK;
+            case "tacogawd" -> new Color(255, 102, 0);
+            case "icedLatte" -> new Color(153, 102, 255);
+            case "spicyBoi" -> Color.RED;
+            default -> Color.LIGHT_GRAY;
+        };
+    }
+
     private void openEditPopup(String restaurant) {
         JDialog popup = new JDialog(frame, "Edit Review – " + restaurant, true);
         popup.setSize(550, 650);
         popup.setLocationRelativeTo(frame);
+
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.BLACK);
@@ -199,17 +226,21 @@ public class RestaurantReviewSystem {
         for (Review r : restaurantReviews.get(restaurant)) {
             JPanel revPanel = new JPanel(new BorderLayout());
             revPanel.setBackground(Color.BLACK);
+
             JLabel user = new JLabel("@" + r.getUsername());
             user.setForeground(getUsernameColor(r.getUsername()));
+
             JLabel stars = getColoredStars(r.getRating());
             JLabel text = new JLabel(r.getComment());
             text.setForeground(Color.LIGHT_GRAY);
+
             JPanel box = new JPanel();
             box.setBackground(Color.BLACK);
             box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
             box.add(user);
             box.add(stars);
             box.add(text);
+
             revPanel.add(box, BorderLayout.WEST);
             panel.add(revPanel);
             panel.add(Box.createVerticalStrut(10));
@@ -263,28 +294,6 @@ public class RestaurantReviewSystem {
 
         popup.add(new JScrollPane(panel));
         popup.setVisible(true);
-    }
-
-    private Color getUsernameColor(String user) {
-        return switch (user) {
-            case "cheeeseloverr" -> Color.CYAN;
-            case "foodieQueen" -> Color.PINK;
-            case "tacogawd" -> new Color(255, 102, 0);
-            case "icedLatte" -> new Color(153, 102, 255);
-            case "spicyBoi" -> Color.RED;
-            default -> Color.LIGHT_GRAY;
-        };
-    }
-
-    private String getMood(int stars) {
-        return switch (stars) {
-            case 1 -> "💚 Terrible";
-            case 2 -> "🧡 Meh";
-            case 3 -> "❤️ Okay";
-            case 4 -> "💛 Great!";
-            case 5 -> "💙 Amazing!";
-            default -> "😐";
-        };
     }
 
     public static void main(String[] args) {
