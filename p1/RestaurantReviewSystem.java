@@ -188,7 +188,81 @@ public class RestaurantReviewSystem {
     }
 
     private void openEditPopup(String restaurant) {
-        // your original popup code goes here (unchanged)
+        JDialog popup = new JDialog(frame, "Edit Review – " + restaurant, true);
+        popup.setSize(550, 650);
+        popup.setLocationRelativeTo(frame);
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.BLACK);
+        panel.setBorder(new EmptyBorder(15, 20, 15, 20));
+
+        for (Review r : restaurantReviews.get(restaurant)) {
+            JPanel revPanel = new JPanel(new BorderLayout());
+            revPanel.setBackground(Color.BLACK);
+            JLabel user = new JLabel("@" + r.getUsername());
+            user.setForeground(getUsernameColor(r.getUsername()));
+            JLabel stars = getColoredStars(r.getRating());
+            JLabel text = new JLabel(r.getComment());
+            text.setForeground(Color.LIGHT_GRAY);
+            JPanel box = new JPanel();
+            box.setBackground(Color.BLACK);
+            box.setLayout(new BoxLayout(box, BoxLayout.Y_AXIS));
+            box.add(user);
+            box.add(stars);
+            box.add(text);
+            revPanel.add(box, BorderLayout.WEST);
+            panel.add(revPanel);
+            panel.add(Box.createVerticalStrut(10));
+        }
+
+        JTextArea comment = new JTextArea(3, 20);
+        comment.setWrapStyleWord(true);
+        comment.setLineWrap(true);
+
+        JComboBox<Integer> starRating = new JComboBox<>(new Integer[]{1, 2, 3, 4, 5});
+        JLabel mood = new JLabel("😐");
+        mood.setForeground(Color.LIGHT_GRAY);
+        starRating.addActionListener(e -> mood.setText(getMood((int) starRating.getSelectedItem())));
+
+        JLabel menuTitle = new JLabel("🔥 Top 5 Menu Items:");
+        menuTitle.setForeground(Color.WHITE);
+        panel.add(menuTitle);
+
+        String[] items = topItems.get(restaurant);
+        String[] prices = itemPrices.get(restaurant);
+
+        for (int i = 0; i < items.length; i++) {
+            JPanel itemRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            itemRow.setBackground(Color.BLACK);
+            JLabel item = new JLabel(items[i] + " – " + prices[i]);
+            item.setForeground(Color.WHITE);
+            JSlider slider = new JSlider(1, 5, 3);
+            slider.setMajorTickSpacing(1);
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+            itemRow.add(item);
+            itemRow.add(slider);
+            panel.add(itemRow);
+        }
+
+        JButton save = new JButton("💾 Save");
+        save.setBackground(new Color(0, 153, 76));
+        save.setForeground(Color.WHITE);
+        save.addActionListener(e -> {
+            restaurantReviews.get(restaurant).removeIf(r -> r.getUsername().equals(currentUser.getUsername()));
+            restaurantReviews.get(restaurant).add(new Review(restaurant, (int) starRating.getSelectedItem(), comment.getText(), currentUser.getUsername(), true));
+            popup.dispose();
+            refreshCards();
+        });
+
+        panel.add(new JLabel("✍️ Your Review:")).setForeground(Color.WHITE);
+        panel.add(comment);
+        panel.add(starRating);
+        panel.add(mood);
+        panel.add(save);
+
+        popup.add(new JScrollPane(panel));
+        popup.setVisible(true);
     }
 
     private Color getUsernameColor(String user) {
