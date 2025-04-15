@@ -11,11 +11,11 @@ A fun, interactive Java GUI application that allows users to rate restaurants, v
 ✅ Rate restaurants from 1–5 stars using dynamic colored star icons  
 ✅ Emoji-based mood labels (💚 Terrible to 💙 Amazing!)  
 ✅ Realistic fake reviews from fun usernames (e.g., `@cheeeseloverr`, `@icedLatte`)  
-✅ Edit your own review and see others’ reviews in read-only mode  
+✅ Edit your review and see others’ reviews in read-only mode  
 ✅ Rate top 5 menu items (with prices and 🔥 popularity indicator)  
 ✅ Delete your review with a single click  
-✅ Search bar + Sort dropdown (by name and rating)  
-✅ Dark mode interface with styled cards and restaurant logos  
+✅ Sort dropdown (by name and rating)  
+✅ Dark mode interface with styled cards 
 ✅ Personalized “Thank you for rating 🙏” message on review submission
 
 🧩 UML Class Diagram
