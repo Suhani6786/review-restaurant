@@ -13,7 +13,7 @@ A fun, interactive Java GUI application that allows users to rate restaurants, v
 ✅ Delete your review with a single click  
 ✅ Sort dropdown (by name and rating)  
 ✅ Dark mode interface with styled cards 
-✅ Personalized “Thank you for rating 🙏” message on review submission
+
 
 🧩 UML Class Diagram
 
