@@ -3,7 +3,7 @@
 
 A fun, interactive Java GUI application that allows users to rate restaurants, view average ratings, and explore top menu items. Built using **Java Swing**, this system brings Yelp-style reviews to your desktop with a clean, dark-themed interface and emoji-powered flair! 😋🔥
  
-[![YouTube Demo](https://img.shields.io/badge/YouTube-Video-red?logo=youtube)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID_HERE)
+[![YouTube Demo] https://youtu.be/zX967uk-8KM
 
 
 🌟 Features
